@@ -4,38 +4,28 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers;
 
-use App\Factory\BankTransactionFactory;
-use App\Factory\BankTransactionRuleFactory;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Collection;
+use App\Models\BankTransactionRule;
 use App\Filters\BankTransactionFilters;
+use App\Factory\BankTransactionRuleFactory;
 use App\Filters\BankTransactionRuleFilters;
-use App\Helpers\Bank\Yodlee\Yodlee;
-use App\Http\Requests\BankTransactionRule\CreateBankTransactionRuleRequest;
-use App\Http\Requests\BankTransactionRule\DestroyBankTransactionRuleRequest;
+use App\Repositories\BankTransactionRuleRepository;
+use App\Transformers\BankTransactionRuleTransformer;
+use App\Http\Requests\BankTransactionRule\BulkBankTransactionRuleRequest;
 use App\Http\Requests\BankTransactionRule\EditBankTransactionRuleRequest;
 use App\Http\Requests\BankTransactionRule\ShowBankTransactionRuleRequest;
 use App\Http\Requests\BankTransactionRule\StoreBankTransactionRuleRequest;
+use App\Http\Requests\BankTransactionRule\CreateBankTransactionRuleRequest;
 use App\Http\Requests\BankTransactionRule\UpdateBankTransactionRuleRequest;
-use App\Http\Requests\BankTransaction\AdminBankTransactionRuleRequest;
-use App\Http\Requests\Import\PreImportRequest;
-use App\Jobs\Bank\MatchBankTransactionRules;
-use App\Models\BankTransaction;
-use App\Models\BankTransactionRule;
-use App\Repositories\BankTransactionRepository;
-use App\Repositories\BankTransactionRuleRepository;
-use App\Services\Bank\BankMatchingService;
-use App\Transformers\BankTransactionRuleTransformer;
-use App\Transformers\BankTransactionTransformer;
-use App\Utils\Traits\MakesHash;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
+use App\Http\Requests\BankTransactionRule\DestroyBankTransactionRuleRequest;
 
 class BankTransactionRuleController extends BaseController
 {
@@ -61,8 +51,7 @@ class BankTransactionRuleController extends BaseController
      *      tags={"bank_transaction_rules"},
      *      summary="Gets a list of bank_transaction_rules",
      *      description="Lists all bank transaction rules",
-     *      @OA\Parameter(ref="#/components/parameters/X-Api-Secret"),
-     *      @OA\Parameter(ref="#/components/parameters/X-Api-Token"),
+     *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
      *      @OA\Parameter(ref="#/components/parameters/index"),
@@ -96,16 +85,14 @@ class BankTransactionRuleController extends BaseController
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
-     * @param BankTransactionFilters $filter
+     * @param BankTransactionRuleFilters $filters
      * @return Response|mixed
      */
     public function index(BankTransactionRuleFilters $filters)
     {
-
         $bank_transaction_rules = BankTransactionRule::filter($filters);
 
         return $this->listResponse($bank_transaction_rules);
-
     }
 
     /**
@@ -113,7 +100,7 @@ class BankTransactionRuleController extends BaseController
      *
      * @param ShowBankTransactionRuleRequest $request
      * @param BankTransactionRule $bank_transaction_rule
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      *
      *
      * @OA\Get(
@@ -122,8 +109,7 @@ class BankTransactionRuleController extends BaseController
      *      tags={"bank_transaction_rules"},
      *      summary="Shows a bank_transaction",
      *      description="Displays a bank_transaction by id",
-     *      @OA\Parameter(ref="#/components/parameters/X-Api-Secret"),
-     *      @OA\Parameter(ref="#/components/parameters/X-Api-Token"),
+     *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
      *      @OA\Parameter(
@@ -169,7 +155,7 @@ class BankTransactionRuleController extends BaseController
      *
      * @param EditBankTransactionRuleRequest $request
      * @param BankTransactionRule $bank_transaction_rule
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      *
      *
      * @OA\Get(
@@ -178,8 +164,7 @@ class BankTransactionRuleController extends BaseController
      *      tags={"bank_transaction_rules"},
      *      summary="Shows a bank_transaction for editing",
      *      description="Displays a bank_transaction by id",
-     *      @OA\Parameter(ref="#/components/parameters/X-Api-Secret"),
-     *      @OA\Parameter(ref="#/components/parameters/X-Api-Token"),
+     *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
      *      @OA\Parameter(
@@ -224,7 +209,7 @@ class BankTransactionRuleController extends BaseController
      *
      * @param UpdateBankTransactionRuleRequest $request
      * @param BankTransactionRule $bank_transaction_rule
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      *
      *
      *
@@ -234,8 +219,7 @@ class BankTransactionRuleController extends BaseController
      *      tags={"bank_transaction_rules"},
      *      summary="Updates a bank_transaction Rule",
      *      description="Handles the updating of a bank_transaction rule by id",
-     *      @OA\Parameter(ref="#/components/parameters/X-Api-Secret"),
-     *      @OA\Parameter(ref="#/components/parameters/X-Api-Token"),
+     *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
      *      @OA\Parameter(
@@ -272,7 +256,6 @@ class BankTransactionRuleController extends BaseController
      */
     public function update(UpdateBankTransactionRuleRequest $request, BankTransactionRule $bank_transaction_rule)
     {
-
         //stubs for updating the model
         $bank_transaction = $this->bank_transaction_repo->save($request->all(), $bank_transaction_rule);
 
@@ -283,7 +266,7 @@ class BankTransactionRuleController extends BaseController
      * Show the form for creating a new resource.
      *
      * @param CreateBankTransactionRuleRequest $request
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      *
      *
      *
@@ -293,8 +276,7 @@ class BankTransactionRuleController extends BaseController
      *      tags={"bank_transaction_rules"},
      *      summary="Gets a new blank bank_transaction rule object",
      *      description="Returns a blank object with default values",
-     *      @OA\Parameter(ref="#/components/parameters/X-Api-Secret"),
-     *      @OA\Parameter(ref="#/components/parameters/X-Api-Token"),
+     *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
      *      @OA\Response(
@@ -320,7 +302,9 @@ class BankTransactionRuleController extends BaseController
      */
     public function create(CreateBankTransactionRuleRequest $request)
     {
-        $bank_transaction_rule = BankTransactionRuleFactory::create(auth()->user()->company()->id, auth()->user()->id, auth()->user()->account_id);
+        /** @var \App\Models\User $user **/
+        $user = auth()->user();
+        $bank_transaction_rule = BankTransactionRuleFactory::create($user->company()->id, $user->id);
 
         return $this->itemResponse($bank_transaction_rule);
     }
@@ -329,18 +313,17 @@ class BankTransactionRuleController extends BaseController
      * Store a newly created resource in storage.
      *
      * @param StoreBankTransactionRuleRequest $request
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      *
      *
      *
      * @OA\Post(
      *      path="/api/v1/bank_transaction_rules",
-     *      operationId="storeBankTransaction",
+     *      operationId="storeBankTransactionRule",
      *      tags={"bank_transaction_rules"},
      *      summary="Adds a bank_transaction rule",
      *      description="Adds an bank_transaction to a company",
-     *      @OA\Parameter(ref="#/components/parameters/X-Api-Secret"),
-     *      @OA\Parameter(ref="#/components/parameters/X-Api-Token"),
+     *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
      *      @OA\Response(
@@ -366,8 +349,11 @@ class BankTransactionRuleController extends BaseController
      */
     public function store(StoreBankTransactionRuleRequest $request)
     {
-        //stub to store the model
-        $bank_transaction_rule = $this->bank_transaction_repo->save($request->all(), BankTransactionRuleFactory::create(auth()->user()->company()->id, auth()->user()->id, auth()->user()->account_id));
+        
+        /** @var \App\Models\User $user **/
+        $user = auth()->user();
+
+        $bank_transaction_rule = $this->bank_transaction_repo->save($request->all(), BankTransactionRuleFactory::create($user->company()->id, $user->id));
 
         return $this->itemResponse($bank_transaction_rule);
     }
@@ -377,7 +363,7 @@ class BankTransactionRuleController extends BaseController
      *
      * @param DestroyBankTransactionRuleRequest $request
      * @param BankTransactionRule $bank_transaction_rule
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      *
      *
      * @throws \Exception
@@ -387,8 +373,7 @@ class BankTransactionRuleController extends BaseController
      *      tags={"bank_transaction_rules"},
      *      summary="Deletes a bank_transaction rule",
      *      description="Handles the deletion of a bank_transaction rule by id",
-     *      @OA\Parameter(ref="#/components/parameters/X-Api-Secret"),
-     *      @OA\Parameter(ref="#/components/parameters/X-Api-Token"),
+     *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
      *      @OA\Parameter(
@@ -433,7 +418,7 @@ class BankTransactionRuleController extends BaseController
     /**
      * Perform bulk actions on the list view.
      *
-     * @return Collection
+     * @return \Illuminate\Support\Collection
      *
      * @OA\Post(
      *      path="/api/v1/bank_transation_rules/bulk",
@@ -441,8 +426,7 @@ class BankTransactionRuleController extends BaseController
      *      tags={"bank_transaction_rules"},
      *      summary="Performs bulk actions on an array of bank_transation rules",
      *      description="",
-     *      @OA\Parameter(ref="#/components/parameters/X-Api-Secret"),
-     *      @OA\Parameter(ref="#/components/parameters/X-Api-Token"),
+     *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/index"),
      *      @OA\RequestBody(
@@ -480,26 +464,21 @@ class BankTransactionRuleController extends BaseController
      *       ),
      *     )
      */
-    public function bulk()
+    public function bulk(BulkBankTransactionRuleRequest $request)
     {
-        $action = request()->input('action');
+        $action = $request->input('action');
 
-        if(!in_array($action, ['archive', 'restore', 'delete']))
-            return response()->json(['message' => 'Unsupported action.'], 400);
-
-        $ids = request()->input('ids');
+        $ids = $request->input('ids');
             
-        $bank_transaction_rules = BankTransactionRule::withTrashed()->whereIn('id', $this->transformKeys($ids))->company()->get();
-
-        $bank_transaction_rules->each(function ($bank_transaction_rule, $key) use ($action) {
-            if (auth()->user()->can('edit', $bank_transaction_rule)) {
-                $this->bank_transaction_repo->{$action}($bank_transaction_rule);
-            }
-        });
+        $bank_transaction_rules = BankTransactionRule::withTrashed()
+                                                     ->whereIn('id', $this->transformKeys($ids))
+                                                     ->company()
+                                                     ->cursor()
+                                                     ->each(function ($bank_transaction_rule, $key) use ($action) {
+                                                         $this->bank_transaction_repo->{$action}($bank_transaction_rule);
+                                                     });
 
         /* Need to understand which permission are required for the given bulk action ie. view / edit */
-
         return $this->listResponse(BankTransactionRule::withTrashed()->whereIn('id', $this->transformKeys($ids))->company());
     }
-
 }

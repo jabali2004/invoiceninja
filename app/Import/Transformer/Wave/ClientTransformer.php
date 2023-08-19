@@ -2,9 +2,9 @@
 /**
  * Invoice Ninja (https://clientninja.com).
  *
- * @link https://github.com/clientninja/clientninja source repository
+ * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2022. client Ninja LLC (https://clientninja.com)
+ * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -28,7 +28,8 @@ class ClientTransformer extends BaseTransformer
     public function transform($data)
     {
         if (isset($data['customer_name']) && $this->hasClient($data['customer_name'])) {
-            throw new ImportException('Client already exists');
+            return false;
+            // throw new ImportException('Client already exists');
         }
 
         $settings = new \stdClass;

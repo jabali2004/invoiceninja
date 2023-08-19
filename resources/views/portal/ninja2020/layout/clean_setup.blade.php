@@ -9,7 +9,6 @@
                 /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
                 _paq.push(['trackPageView']);
                 _paq.push(['enableLinkTracking']);
-                _paq.push(['setUserId', '{{ auth()->guard('contact')->user()->company->present()->name }}']);
                 (function() {
                 var u="{{ $company->matomo_url }}";
                 _paq.push(['setTrackerUrl', u+'matomo.php']);
@@ -46,7 +45,7 @@
         @endif
 
         <!-- Title -->
-        @auth()
+        @auth('contact')
             <title>@yield('meta_title', '') — {{ auth()->guard('contact')->user()->user->account->isPaid() ? auth()->guard('contact')->user()->company->present()->name() : 'Invoice Ninja' }}</title>
         @endauth
 
@@ -90,7 +89,10 @@
         @else
             <link href="{{ str_replace("setup", "", Request::url())}}css/app.css" rel="stylesheet">
         @endif
+        
+        @if(auth()->guard('contact')->user() && !auth()->guard('contact')->user()->user->account->isPaid())
         {{-- <link href="{{ mix('favicon.png') }}" rel="shortcut icon" type="image/png"> --}}
+        @endif
 
         <link rel="canonical" href="{{ config('ninja.app_url') }}/{{ request()->path() }}"/>
 

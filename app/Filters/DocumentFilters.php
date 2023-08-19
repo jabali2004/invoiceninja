@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -12,7 +12,6 @@
 namespace App\Filters;
 
 use App\Models\Company;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -23,11 +22,11 @@ class DocumentFilters extends QueryFilters
     /**
      * Filter based on search text.
      *
-     * @param string query filter
+     * @param string $filter
      * @return Builder
      * @deprecated
      */
-    public function filter(string $filter = '') : Builder
+    public function filter(string $filter = ''): Builder
     {
         if (strlen($filter) == 0) {
             return $this->builder;
@@ -36,8 +35,16 @@ class DocumentFilters extends QueryFilters
         return $this->builder;
     }
 
-    /* If client ID passed to this entity, simply return */
-    public function client_id(string $client_id = '') :Builder
+    /**
+     * Overriding method as client_id does
+     * not exist on this model, just pass
+     * back the builder
+     *
+     * @param  string $client_id The client hashed id.
+     *
+     * @return Builder
+     */
+    public function client_id(string $client_id = ''): Builder
     {
         return $this->builder;
     }
@@ -45,12 +52,16 @@ class DocumentFilters extends QueryFilters
     /**
      * Sorts the list based on $sort.
      *
-     * @param string sort formatted as column|asc
+     * @param string $sort formatted as column|asc
      * @return Builder
      */
-    public function sort(string $sort) : Builder
+    public function sort(string $sort = ''): Builder
     {
         $sort_col = explode('|', $sort);
+
+        if (!is_array($sort_col) || count($sort_col) != 2) {
+            return $this->builder;
+        }
 
         return $this->builder->orderBy($sort_col[0], $sort_col[1]);
     }
@@ -58,31 +69,19 @@ class DocumentFilters extends QueryFilters
 
     public function company_documents($value = 'false')
     {
-        if($value == 'true')
+        if ($value == 'true') {
             return $this->builder->where('documentable_type', Company::class);
+        }
     
-        return $this->builder;
-    }
-
-    /**
-     * Returns the base query.
-     *
-     * @param int company_id
-     * @param User $user
-     * @return Builder
-     * @deprecated
-     */
-    public function baseQuery(int $company_id, User $user) : Builder
-    {
         return $this->builder;
     }
 
     /**
      * Filters the query by the users company ID.
      *
-     * @return Illuminate\Database\Query\Builder
+     * @return Builder
      */
-    public function entityFilter()
+    public function entityFilter(): Builder
     {
         return $this->builder->company();
     }

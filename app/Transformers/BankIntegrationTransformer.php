@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -12,8 +12,11 @@
 namespace App\Transformers;
 
 use App\Models\Account;
+use App\Models\Company;
 use App\Models\BankIntegration;
+use App\Models\BankTransaction;
 use App\Utils\Traits\MakesHash;
+use App\Transformers\EntityTransformer;
 
 /**
  * Class BankIntegrationTransformer.
@@ -88,5 +91,4 @@ class BankIntegrationTransformer extends EntityTransformer
 
         return $this->includeCollection($bank_integration->transactions, $transformer, BankTransaction::class);
     }
-
 }

@@ -4,18 +4,18 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\TwoFactor\EnableTwoFactorRequest;
 use App\Models\User;
-use App\Transformers\UserTransformer;
-use Crypt;
+use App\Utils\Ninja;
 use PragmaRX\Google2FA\Google2FA;
+use App\Transformers\UserTransformer;
+use App\Http\Requests\TwoFactor\EnableTwoFactorRequest;
 
 class TwoFactorController extends BaseController
 {
@@ -25,11 +25,15 @@ class TwoFactorController extends BaseController
 
     public function setupTwoFactor()
     {
+        /** @var \App\Models\User $user */
         $user = auth()->user();
 
         if ($user->google_2fa_secret) {
             return response()->json(['message' => '2FA already enabled'], 400);
-        } elseif (! $user->phone) {
+        } elseif(Ninja::isSelfHost()){
+
+        }
+        elseif (! $user->phone) {
             return response()->json(['message' => ctrans('texts.set_phone_for_two_factor')], 400);
         } elseif (! $user->isVerified()) {
             return response()->json(['message' => 'Please confirm your account first'], 400);

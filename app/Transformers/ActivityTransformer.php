@@ -4,26 +4,31 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Transformers;
 
-use App\Models\Activity;
-use App\Models\Backup;
-use App\Models\ClientContact;
-use App\Models\Invoice;
-use App\Models\PurchaseOrder;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\Quote;
+use App\Models\Backup;
+use App\Models\Client;
+use App\Models\Credit;
 use App\Models\Vendor;
+use App\Models\Expense;
+use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\Activity;
+use App\Models\ClientContact;
+use App\Models\PurchaseOrder;
 use App\Models\VendorContact;
-use App\Transformers\PurchaseOrderTransformer;
-use App\Transformers\VendorContactTransformer;
-use App\Transformers\VendorTransformer;
 use App\Utils\Traits\MakesHash;
+use App\Models\RecurringInvoice;
+use App\Transformers\EntityTransformer;
+use App\Transformers\InvoiceHistoryTransformer;
 
 class ActivityTransformer extends EntityTransformer
 {

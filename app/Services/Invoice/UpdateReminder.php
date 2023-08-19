@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -18,14 +18,9 @@ use Carbon\Carbon;
 
 class UpdateReminder extends AbstractService
 {
-    public $invoice;
 
-    public $settings;
-
-    public function __construct(Invoice $invoice, $settings = null)
+    public function __construct(public Invoice $invoice, public mixed $settings = null)
     {
-        $this->invoice = $invoice;
-        $this->settings = $settings;
     }
 
     /* We only support setting reminders based on the due date, not the partial due date */
@@ -160,19 +155,6 @@ class UpdateReminder extends AbstractService
         return $this->invoice;
     }
 
-    private function testReminderValid($reminder_number, $reminder_schedule) :bool
-    {
-        $reminder_sent = "reminder{$reminder_number}_sent";
-        $schedule_reminder = "schedule_reminder{$reminder_number}";
-        $enable_reminder = "enable_reminder{$reminder_number}";
-        $late_fee_amount = "late_fee_amount{$reminder_number}";
-        $late_fee_percent = "late_fee_percent{$reminder_number}";
-
-        return is_null($this->invoice->{$reminder_sent}) &&
-            $this->settings->{$schedule_reminder} == $reminder_schedule &&
-            ($this->settings->{$enable_reminder} || $late_fee_percent > 0 || $late_fee_amount > 0);
-    }
-
     private function addTimeInterval($date, $endless_reminder_frequency_id) :?Carbon
     {
         if (! $date) {
@@ -182,7 +164,7 @@ class UpdateReminder extends AbstractService
         switch ($endless_reminder_frequency_id) {
             case RecurringInvoice::FREQUENCY_DAILY:
                 return Carbon::parse($date)->addDay()->startOfDay();
-           case RecurringInvoice::FREQUENCY_WEEKLY:
+            case RecurringInvoice::FREQUENCY_WEEKLY:
                 return Carbon::parse($date)->addWeek()->startOfDay();
             case RecurringInvoice::FREQUENCY_TWO_WEEKS:
                 return Carbon::parse($date)->addWeeks(2)->startOfDay();

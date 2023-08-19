@@ -4,19 +4,19 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Transformers;
 
-
-use App\Models\PurchaseOrder;
-use App\Models\PurchaseOrderInvitation;
 use App\Models\Vendor;
-use App\Transformers\DocumentTransformer;
+use App\Models\Expense;
+use App\Models\Document;
+use App\Models\PurchaseOrder;
 use App\Utils\Traits\MakesHash;
+use App\Models\PurchaseOrderInvitation;
 
 class PurchaseOrderTransformer extends EntityTransformer
 {
@@ -135,5 +135,4 @@ class PurchaseOrderTransformer extends EntityTransformer
             'currency_id' => $purchase_order->currency_id ? (string) $purchase_order->currency_id : '',
         ];
     }
-
 }

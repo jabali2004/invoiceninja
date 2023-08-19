@@ -4,17 +4,14 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Utils\Traits;
 
-use App\Models\Country;
-use App\Models\Credit;
 use App\Models\Invoice;
-use App\Models\Quote;
 use App\Utils\Helpers;
 use App\Utils\Number;
 use Carbon\Carbon;
@@ -263,7 +260,6 @@ trait MakesInvoiceValues
      */
     public function transformLineItems($items, $table_type = '$product') :array
     {   //$start = microtime(true);
-
         $entity = $this->client ? $this->client : $this->vendor;
 
         $data = [];
@@ -284,7 +280,7 @@ trait MakesInvoiceValues
 
             if ($table_type == '$task' && $item->type_id != 2) {
                 // if ($item->type_id != 4 && $item->type_id != 5) {
-                    continue;
+                continue;
                 // }
             }
 
@@ -386,7 +382,7 @@ trait MakesInvoiceValues
     private function makeLineTaxes() :string
     {
         $tax_map = $this->calc()->getTaxMap();
-        $entity = $this->client ? $this->client : $this->company;
+        $entity = $this->client ? $this->client : $this->vendor;
 
         $data = '';
 
@@ -406,7 +402,7 @@ trait MakesInvoiceValues
     private function makeTotalTaxes() :string
     {
         $data = '';
-        $entity = $this->client ? $this->client : $this->company;
+        $entity = $this->client ? $this->client : $this->vendor;
 
         if (! $this->calc()->getTotalTaxMap()) {
             return $data;
@@ -439,7 +435,7 @@ trait MakesInvoiceValues
     private function totalTaxValues() :string
     {
         $data = '';
-        $entity = $this->client ? $this->client : $this->company;
+        $entity = $this->client ? $this->client : $this->vendor;
 
         if (! $this->calc()->getTotalTaxMap()) {
             return $data;
@@ -468,7 +464,7 @@ trait MakesInvoiceValues
     private function lineTaxValues() :string
     {
         $tax_map = $this->calc()->getTaxMap();
-        $entity = $this->client ? $this->client : $this->company;
+        $entity = $this->client ? $this->client : $this->vendor;
 
         $data = '';
 

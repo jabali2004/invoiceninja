@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -14,7 +14,6 @@ namespace App\Repositories;
 use App\Factory\ClientFactory;
 use App\Models\Client;
 use App\Models\Company;
-use App\Utils\Traits\ClientGroupSettingsSaver;
 use App\Utils\Traits\GeneratesCounter;
 use App\Utils\Traits\SavesDocuments;
 use Illuminate\Database\QueryException;
@@ -52,7 +51,6 @@ class ClientRepository extends BaseRepository
      * @return     Client|Client|null  Client Object
      *
      * @throws \Laracasts\Presenter\Exceptions\PresenterException
-     * @todo       Write tests to make sure that custom client numbers work as expected.
      */
     public function save(array $data, Client $client) : ?Client
     {
@@ -73,6 +71,7 @@ class ClientRepository extends BaseRepository
         }
 
         if (! $client->country_id) {
+            /** @var \App\Models\Company $company **/
             $company = Company::find($client->company_id);
             $client->country_id = $company->settings->country_id;
         }
@@ -80,7 +79,6 @@ class ClientRepository extends BaseRepository
         $client->save();
 
         if (! isset($client->number) || empty($client->number) || strlen($client->number) == 0) {
-
             $x = 1;
 
             do {
@@ -103,7 +101,11 @@ class ClientRepository extends BaseRepository
             $data['name'] = $client->present()->name();
         }
 
-        $this->contact_repo->save($contact_data, $client);
+        //24-01-2023 when a logo is uploaded, no other data is set, so we need to catch here and not update
+        //the contacts array UNLESS there are no contacts and we need to maintain state.
+        if (array_key_exists('contacts', $contact_data) || $client->contacts()->count() == 0) {
+            $this->contact_repo->save($contact_data, $client);
+        }
 
         return $client;
     }
@@ -116,9 +118,12 @@ class ClientRepository extends BaseRepository
      */
     public function create($client): ?Client
     {
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+
         return $this->save(
             $client,
-            ClientFactory::create(auth()->user()->company()->id, auth()->user()->id)
+            ClientFactory::create($user->company()->id, $user->id)
         );
     }
 
@@ -132,7 +137,7 @@ class ClientRepository extends BaseRepository
         $client->projects()->forceDelete();
         $client->credits()->forceDelete();
         $client->quotes()->forceDelete();
-        $client->activities()->forceDelete();
+        $client->purgeable_activities()->forceDelete();
         $client->recurring_invoices()->forceDelete();
         $client->expenses()->forceDelete();
         $client->recurring_expenses()->forceDelete();

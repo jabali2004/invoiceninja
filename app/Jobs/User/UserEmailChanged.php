@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -24,33 +24,23 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Mail;
 use stdClass;
 
 class UserEmailChanged implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $new_user;
-
-    protected $old_user;
-
-    protected $company;
-
     public $settings;
 
     /**
      * Create a new job instance.
      *
-     * @param string $new_email
-     * @param string $old_email
-     * @param Company $company
+     * @param \App\Models\User $new_user
+     * @param \stdClass $old_user
+     * @param \App\Models\Company $company
      */
-    public function __construct(User $new_user, $old_user, Company $company)
+    public function __construct(protected User $new_user, protected \stdClass $old_user, protected Company $company)
     {
-        $this->new_user = $new_user;
-        $this->old_user = $old_user;
-        $this->company = $company;
         $this->settings = $this->company->settings;
     }
 

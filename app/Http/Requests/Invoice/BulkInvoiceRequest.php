@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -15,7 +15,6 @@ use App\Http\Requests\Request;
 
 class BulkInvoiceRequest extends Request
 {
-
     public function authorize() : bool
     {
         return true;
@@ -25,8 +24,8 @@ class BulkInvoiceRequest extends Request
     {
         return [
             'action' => 'required|string',
-            'ids' => 'required'
+            'ids' => 'required|array',
+            'email_type' => 'sometimes|in:reminder1,reminder2,reminder3,reminder_endless,custom1,custom2,custom3,invoice,quote,credit,payment,payment_partial,statement,purchase_order'
         ];
     }
-
 }

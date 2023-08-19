@@ -4,15 +4,13 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Credit;
 
-use App\Helpers\Email\CreditEmail;
-use App\Jobs\Credit\EmailCredit;
 use App\Jobs\Entity\EmailEntity;
 use App\Models\ClientContact;
 
@@ -35,7 +33,6 @@ class SendEmail
 
     /**
      * Builds the correct template to send.
-     * @return void
      */
     public function run()
     {

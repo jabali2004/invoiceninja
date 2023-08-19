@@ -1,0 +1,25 @@
+includes:
+    - ./vendor/nunomaduro/larastan/extension.neon
+    - ./vendor/spaze/phpstan-stripe/extension.neon
+parameters:
+    level: 2
+    paths:
+        - 'app/'
+    excludePaths:
+        - 'vendor/'
+        - 'app/Jobs/Ninja/*'
+        - 'app/Models/Presenters/*'
+        - 'app/Console/Commands/*'
+        - 'app/DataMapper/Analytics/*'
+        - 'app/PaymentDrivers/Authorize/*'
+        - 'app/Utils/Traits/*'
+        - 'resources/views/*'
+    universalObjectCratesClasses:
+        - App\DataMapper\Tax\RuleInterface
+        - App\DataMapper\FeesAndLimits
+    reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        - '#Array has 2 duplicate keys with value#'
+        - '#Call to an undefined method#'
+        - '#makeHidden#'
+        - '#Socialite#'
